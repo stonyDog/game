@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>まるばつゲーム</title>
+    <!--<link rel="stylesheet" href="style.css">-->
+  </head>
+  <body>
+    <!--入力box-->
+    <h4 class="addnum">まるばつゲーム</h4>
+    <form id="addForm" class="form-inline mb-3">
+      <table border="1">
+        <tr>
+          <th>盤面サイズ</th><th>勝利条件</th><th>先行/後攻</th>
+        </tr>
+        <tr>
+          <td>
+            <input type="number" class="form-control mr-2" id="number1" value=3 min="3" max="10">
+          </td>
+          <td>
+            <input type="number" class="form-control mr-2" id="number2" value=3 min="3" max="10">
+          </td>
+          <td>
+            <select name="select1" id="whoFirst">
+              <option>先行</option>
+              <option>後攻</option>
+            </select>
+            </td>    
+        </tr>
+      </table>
+      <input type="submit" class="btn btn-dark" value="開始">
+    </form>
+
+    <!-- 盤 -->
+    <div id="stage" class="stage"></div>
+    <!-- 各マスを描画するためのテンプレート -->
+    <div id="square-template" class="square">
+      <div class="stone"></div>
+    </div>
+    <script src="main.js"></script>
+  </body>
+  </html>
