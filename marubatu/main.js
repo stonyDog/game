@@ -2,7 +2,7 @@ const stage = document.getElementById("stage");
 const squareTemplate = document.getElementById("square-template");
 const form = document.getElementById('addForm');
 
-const stoneStateList = [];
+var stoneStateList = [];
 
 const currentTurnText = document.getElementById("current-turn");
 
@@ -13,6 +13,7 @@ css.setAttribute("href","style.css");
 
 //ボードサイズ
 var boardSize;
+var winNumber;
 
 // Form submit event
 form.addEventListener('submit', addItem);
@@ -23,11 +24,21 @@ function addItem(e){
     
     // Get input value
     boardSize = document.getElementById('number1').value;
-    const winNumber = document.getElementById('number2').value;
+    winNumber = document.getElementById('number2').value;
     const whoFirst = document.getElementById('whoFirst').value;
     console.log(boardSize);
     console.log(winNumber);
     console.log(whoFirst);
+
+    //javascript上の石情報初期化
+    for(var a = 0; a < 3; a++){
+        stoneStateList[a] = [];
+        
+        for(var b = 0; b < 3; b++){
+            stoneStateList[a][b] = 0;
+        }
+    }
+    console.log(stoneStateList);
 
     //不正値制約
     if(boardSize == '' || winNumber== '' || boardSize<winNumber){
@@ -48,43 +59,52 @@ let currentColor = 1;
 
 //createSquaresの上に、関数を新しく作る
 const onClickSquare = (index) => {
-    console.log(index);
-    
-    //勝敗判定
-    checkStone();
+    //indexからx_y座標に変換する
+    var stoneX = index % boardSize;
+    var stoneY = Math.floor(index/boardSize);
     
     //他の石がある場合は置けないメッセージを出す
-    if (stoneStateList[index] !== 0 ) {
+    if (stoneStateList[stoneX][stoneY] !== 0 ) {
         alert("ここには置けないよ！");
         return;
     }
     //自分の石を置く
-    stoneStateList[index] = currentColor;
+    stoneStateList[stoneX][stoneY] = currentColor;
     //html上の石データを更新する
     document
     .querySelector(`[data-index='${index}']`)
     .setAttribute("data-state", currentColor);
 
     //勝敗判定
-    if(checkStone(index,currentColor)==1){
-        alert("おわり");
-        return;
-    }
-
-    //ゲーム続行なら相手のターンにする
-    currentColor = 3 - currentColor;
-    if (currentColor === 1) {
-        currentTurnText.textContent = "黒";
-    } else {
-        currentTurnText.textContent = "白";
+    if(checkStone(stoneX,stoneY,currentColor)==1){
+        const message = document.getElementById('message');
+        console.log(message);
+        if(currentColor===1){
+            message.textContent = "黒の勝ち!";
+        }else{
+            message.textContent = "白の勝ち!";
+        }
+    }else{
+        //ゲーム続行なら相手のターンにする
+        currentColor = 3 - currentColor;
+        if (currentColor === 1) {
+            currentTurnText.textContent = "黒";
+        } else {
+            currentTurnText.textContent = "白";
+        }
     }
 }
 
 //現在の石のチェック
-const checkStone = (index,currentColor) => {
+const checkStone = (stoneX,stoneY,currentColor) => {
 
     //チェック方向の単位
-    const directVector = [1, boardSize+1, boardSize, boardSize-1];
+    const directVector = [
+        [1,0],
+        [1,1],
+        [0,1],
+        [-1,1]
+    ];
 
     //8方向への走査のためのfor文
     for (let i = 0; i < 4; i++) {
@@ -92,21 +112,32 @@ const checkStone = (index,currentColor) => {
         let stoneCount = 1;
         
         //directVector方向の探索
-        let checkStoneNumber = index + directVector[i];
-        //if(0<=checkStoneNumber || checkStoneNumber<boardSize*boardSize){
-        while(stoneStateList[checkStoneNumber]==currentColor){
-            checkStoneNumber+=directVector[i];
+        let checkStoneX = stoneX + directVector[i][0];
+        let checkStoneY = stoneY + directVector[i][1];
+
+        //有効範囲内探索
+        while(0<=checkStoneX & checkStoneX<boardSize & 0<=checkStoneY & checkStoneY<boardSize ){
+            if(stoneStateList[checkStoneX][checkStoneY]!=currentColor){
+                break;
+            }
+            checkStoneX+=directVector[i][0];
+            checkStoneY+=directVector[i][1];
             stoneCount++;    
         }
         //directVector逆方向の探索
-        checkStoneNumber = index - directVector[i];
-        while(stoneStateList[checkStoneNumber]==currentColor){
-            checkStoneNumber-=directVector[i];
-            stoneCount++;
+        checkStoneX = stoneX - directVector[i][0];
+        checkStoneY = stoneY - directVector[i][1];
+        while(0<=checkStoneX & checkStoneX<boardSize & 0<=checkStoneY & checkStoneY<boardSize ){
+            if(stoneStateList[checkStoneX][checkStoneY]!=currentColor){
+                break;
+            }
+            checkStoneX-=directVector[i][0];
+            checkStoneY-=directVector[i][1];
+            stoneCount++;    
         }
         //石が規定数以上連続
         if(stoneCount>=winNumber){
-            //return 1;
+            return 1;
         }
     }
     return 0;
@@ -130,6 +161,7 @@ const deleteSquares = () => {
 };
 //ボード作成
 const createSquares = () => {
+
     for (let i = 0; i < boardSize*boardSize; i++) {
         const square = squareTemplate.cloneNode(true); //テンプレートから要素をクローン
         square.removeAttribute("id"); //テンプレート用のid属性を削除
@@ -138,7 +170,7 @@ const createSquares = () => {
         const stone = square.querySelector('.stone');
         stone.setAttribute("data-state", 0);
         stone.setAttribute("data-index", i); //インデックス番号をHTML要素に保持させる
-        stoneStateList.push(0); //初期値を配列に格納
+        //stoneStateList.push(0); //初期値を配列に格納
 
         square.addEventListener('click', () => {
             onClickSquare(i);
